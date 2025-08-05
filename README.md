@@ -1,8 +1,16 @@
 # TERRAFORM & AWS EKS
 ## 📦 Demo 3
-This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcamp. This This demo project shows how to configure a shared remote storage for Terraform using Amazon S3. By centralizing state, teams can safely collaborate on infrastructure code and avoid conflicts caused by local .tfstate files.
+This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcamp. This demo shows how to set up a complete CI/CD pipeline to automate Terraform infrastructure provisioning using Jenkins. The pipeline runs Terraform commands to plan and apply changes whenever there is an update in the infrastructure code repository.
+
+
+
+
+## 📦 Demo 4
+
 ## 📌 Objective
-- Configure amazon S3 as remote storage for terraform state.
+* Integrate Terraform workflows into a CI/CD pipeline.
+* Use a remote backend to store Terraform state.
+
 
 
 ## 🚀 Technologies Used
@@ -14,6 +22,7 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
 - **Docker**: Container
 - **Git**: Version Control
 - **S3**: AWS storage service.
+- **Jenkins**: CI/CD automation server to run pipelines
   
   
    
@@ -138,12 +147,137 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
    ```bash
    terraform output ec2_public_ip
    ```
-3. Pirnt the value to Stdout and \save it into an ENV variable in Jenkins
+3. Print the value to Stdout and \save it into an ENV variable in Jenkins
    ```bash
        EC2_PUBLIC_IP = sh(
              script: "terraform output ec2_public_ip",
              returnStdout: true
        ).trim()
    ```
-   
 
+   4. Now we can reference the Public ip inside the deploy stage
+  
+      ```bash
+      
+             stage("deploy") {
+      
+                  steps{
+      
+                      script{
+      
+                          //Adding waiting period to give time to the EC2 and script to be ready to execute commands, when the server is created the 1st time      
+                          echo "Waiting for EC2 to initialize..."
+                          sleep(time: 120, unit: "SECONDS")
+      
+                          echo "deploying docker image to EC2"
+                          echo "${EC2_PUBLIC_IP}"
+                          
+                          def shellCmd = "bash ./server-cmds.sh ${IMAGE_NAME} ${DOCKER_CREDENTIALS_USR} ${DOCKER_CREDENTIALS_PSW}"
+                          def ec2Instance = "ec2-user@${EC2_PUBLIC_IP}"
+      
+                          sshagent(['server-ssh-key']){
+                              //StrictHostKeyChecking=no turnoff strict host checking when connecting to ec2
+                              dir("java-maven-app"){
+                                  echo "Inside java-maven-app directory to copy files to ec2:"
+                                  sh "ls"
+                                  echo "Copying files to EC2:"
+                                  sh "scp -o StrictHostKeyChecking=no server-cmds.sh ${ec2Instance}:/home/ec2-user"
+                                  sh "scp -o StrictHostKeyChecking=no docker-compose.yaml ${ec2Instance}:/home/ec2-user"
+                                  echo "SSH & Running Script:"
+                                  sh "ssh -o StrictHostKeyChecking=no ${ec2Instance} ${shellCmd}"
+                              }
+                          }                     
+                      }
+                  }
+              }
+
+      ### Allowing Jenkins to SSH AWS
+      1.  Add the jenkins ip to the terraform variables files.
+      ```bash
+            variable jenkins_ip {
+                default = "198.199.70.18/32"
+            }  
+      ```
+      6. Modify the Ingress rules in the main.tf file to allow Jenkins to SSH AWS
+         ```bash
+             ingress {
+                from_port = 22
+                to_port = 22
+                protocol = "tcp"
+                cidr_blocks = [var.my_ip, var.jenkins_ip, var.my_ip_home]
+            }
+         ```
+         7. Using environment block to read values:
+            ```bash
+                environment {
+                    DOCKER_CREDENTIALS = credentials("docker-hub-repo")
+                    //This docker crendetials (username & password) contains the whole object username and password, but it automatically creates the password and username reference out of the box
+                    //DOCKER_CREDENTIALS_USR  --> username
+                    //DOCKER_CREDENTIALS_PSW --> password
+                }
+            
+            ```
+
+       ### Modifyng the Server-cmds.sh
+      1. Adding docker login to the server-cmds script. The EC2 needs to authenticate 
+         ```bash
+             #Env Variables
+              export IMAGE=$1
+              export DOCKER_USER=$2
+              export DOCKER_PWD=$3
+
+             #Passing values to docker login 
+              echo $DOCKER_PWD | docker login -u $DOCKER_USER --password-stdin
+              echo "Docker Image-2: $IMAGE"
+              docker-compose -f docker-compose.yaml up --detach
+              echo "success"
+         ```
+
+
+      ### Git
+   1. commit changes to the ssh-agent branch
+      ```bash
+        git add .
+        git commit -m "CI/CD pipeline"
+        git push
+      ```
+   3. Run the pipeline
+   4. SSH to the EC2 using the PEM file and the public ip address
+      ```bash
+      ssh -i ec2-user@
+   6. Verify that the java-maven-app and the postgres containers are running in the EC2
+   
+## 📦 Demo 4
+This This demo project shows how to configure a shared remote storage for Terraform using Amazon S3. By centralizing state, teams can safely collaborate on infrastructure code and avoid conflicts caused by local .tfstate files.
+## 📌 Objective
+- Configure amazon S3 as remote storage for terraform state.
+
+## Project Configuration
+In the previous demo, the tfstate was saved in the jenkins serer howver, this does not allow to work collaborate among different team memebers. To share the state, the best way is to confiigure a remote terraform state file where it will be stored.
+1. Inside the main.tf add the terraform block which allows to configure metadata about terraform. Define the required version and the remote backed.
+   ```bash
+     terraform {
+        required_version = ">= 0.12"
+        //backend config
+        backend "s3" {
+           bucket = "myapp-tf-s3-bucket-aws"
+           key = "myapp/state.tfstate"
+           region = "us-east-2"
+
+         }
+      }
+   ```
+2. Go to S3 service in your AWS console
+3. Create the S3 Bucket in your AWS console. Using the same name previosly defined, the name must be unique fo the bucket
+4. Enable versioning
+5. Select the encyption type SSE-S3
+6. Disanle Buckey key
+7. Commit the changes and push
+8. Execute pipeline
+   <details><summary><strong>Migrating local state</strong></summary>
+       If there is already a local state, then you should do terraform init and confirm the new backend manually. For demo purposed, the infrasturture here was deleted and recreate it.
+    </details>
+
+9. Check the new state in the bucket
+10. Check the resoures created using terraform state list
+   
