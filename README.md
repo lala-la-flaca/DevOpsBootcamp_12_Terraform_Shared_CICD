@@ -148,7 +148,7 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
    ```bash
      terraform output ec2_public_ip
    ```
-3. Saving the EC2 public IP in a Jenkins environment variable
+3. Saving the EC2 public IP in a Jenkins environment variable.
    Store the output so it can be used later in the pipeline:
    ```bash
        EC2_PUBLIC_IP = sh(
@@ -156,7 +156,7 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
              returnStdout: true
        ).trim()
    ```
-4. Referencing the public IP in the deploy stage
+5. Referencing the public IP in the deploy stage
   
       ```bash      
              stage("deploy") {      
