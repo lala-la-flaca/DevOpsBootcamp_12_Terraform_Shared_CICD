@@ -2,16 +2,9 @@
 ## 📦 Demo 3
 This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcamp. This demo shows how to set up a complete CI/CD pipeline to automate Terraform infrastructure provisioning using Jenkins. The pipeline runs Terraform commands to plan and apply changes whenever there is an update in the infrastructure code repository.
 
-
-
-
-## 📦 Demo 4
-
 ## 📌 Objective
 * Integrate Terraform workflows into a CI/CD pipeline.
 * Use a remote backend to store Terraform state.
-
-
 
 ## 🚀 Technologies Used
 - **Terraform**: Infrastructure as Code Tool for managing cloud resources.
@@ -51,35 +44,36 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
 2. Create a New branch called jenkinsfile-sshagent
 
 ### Creating SSH Key-Pair
-1. Go to AWS console and create a new Key-Pair, named myapp-key-pair
-2. Select the Key pair type RSA
-3. Select the .pem format and create Key pair.
-4. Go To Jenkins and create a new credentials in the multibranch pipeline.
-5. Select kind as SSH Username with private key
+1. n the AWS Management Console, create a new key pair named myapp-key-pair
+2. Select Key pair type as RSA
+3. Select .pem format and create the key pair.
+4. In Jenkins, create a new credential in the Multibranch Pipeline configuration.
+5. Set the credential type to SSH Username with private key, then configure as follows:
    * Select ID: server-ssh-key
    * Username: ec2-user
-   * Select enter directly and Copy and Paste the content of the PEM file in the key section.
+   * Private key: Select enter directly and paste the content of the PEM file.
      
 ### Install Terraform Inside the Jenkins Container
-1. SSH the DigitalOcean droplet.
+1. SSH into DigitalOcean droplet.
    ```bash
      ssh root@198.199.70.18
    ```
-3. Check the container ID
+2. Check the container ID
    ```bash
    docker ps
    ```
-5. Access the jenkins container as Root user.
+3. Access the jenkins container as the root user.
    ```bash
-     docker exec -it -u 0 <> bash
+     docker exec -it -u 0 <container_id> bash
    ```
- 6. Check the OS
+4. Verify the operating system.
     ```bash
       cat /etc/os-release    
     ```
-7. Install terraform according your OS and Terraform guidelines
+5. Install terraform:
+   Follow the Terraform installation guide for your OS.
    [Terraform Install](https://developer.hashicorp.com/terraform/install)
-   
+   For Ubuntu/Debian-based systems:
    ```bash
          wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
@@ -87,24 +81,24 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
    ```
    
 ### Terraform Configuration Files
-1. Create a Terraform folder in the java-maven-app
-2. Inside the terraform folder create main.tf file
-3. Use the baseline configuration from demo1 to create the VPC.
-4. Replace the previous key pair by the new pair created.
+1. In the java-maven-app directory, create a folder named terraform. 
+2. Inside the terraform folder, create a main.tf file.
+3. Use the baseline configuration from Demo 1 to create the VPC.
+4. Replace the previous key pair with the new one:
    ```bash
    key_name = "myapp-key-pair"
    ```
-6. Add a new file in the terraform folder named entry-script.sh. Copy the script into this file which installs docker and docker compose in the EC2 instance.
-7. Create a variables.tf file and add the variables
-8. Add the default values to the variables.
-9. Crate the output.tf file , and copy the outputs in this section.
+6. Create a file named entry-script.sh in the terraform folder and add the script that installs Docker and Docker Compose on the EC2 instance.
+7. Create a variables.tf file and define the required variables.
+8. Add default values for the variables in variables.tf
+9. Create an outputs.tf file and add the required output definitions.
 
 ### Modifying Jenkins File to Provision Server
 1. Add a new stage called "provision server"
-2. Define the steps and script
-3. Add the terraform commands in the script section.
+2. Define the steps and scripts for this stage
+3. Add Terraform commands inside the script section.
    <details><summary><strong>Terraform Commands</strong></summary>
-       The terraform commands must be executed where the terraform files are located. In this casee, we first need to switch directories to run the commands.
+       Terraform commands must be executed from the directory containing the Terraform configuration files
     </details>
     ```bash
               stage("provision server"){
@@ -124,7 +118,8 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
                 }
             
     ```
-4. Set the Environment Variables to enable Terraform to connect to AWS
+4. Set environment variables to allow Terraform to connect to AWS
+   Add the environment block inside the provision server stage:
    ```bash
        environment{
                   AWS_ACCESS_KEY_ID = credentials("jenkins_aws_access_key_id")
@@ -133,39 +128,37 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
               }
    ```
    <details><summary><strong>AWS Credentials</strong></summary>
-       Ensure the crendetials exist in Jenkins. In this case, the credentials already existed in Jenkins because we created them in a previous demo
+       Ensure the credentials exist in Jenkins. In this example, the credentials already exist because they were created in a previous demo
     </details>
     <details><summary><strong>Terraform ENV Variables</strong></summary>
-       the prefix TF_VAR_xxx allows terraform to recongnize ENV Varibles. In this case, we are overwriting the value of the env prefix variable from dev to test.
+       The prefix `TF_VAR_` allows Terraform to recognize environment variables. In this example, the `env_prefix` variable is overwritten from `dev` to `test`
     </details>
 
 ### Modifying Jenkinsfile Deploy Stage
 
-1. Add theSSH section to SSH to the EC2 instance: In this case, the IP address to access the EC2 is unknown until the instance is created using Terraform. Therfore, we must save the output of the public IP from terraform in a ENV varible so Jenkins can use it to SSH the EC2 instance dynamically.
-2. In the provision server stage we must obtain the Publiic IP addreess of the EC2:
-   Add the terraform output command to the provision server stage, where ec2_public_ip is the name of the terraform output.
+1. Enabling dynamic SSH access to the EC2 instance:
+   When the EC2 instance is created with Terraform, its public IP address is not known in advance.To enable Jenkins to connect via SSH dynamically, store the Terraform output for the public IP in an environment variable.
+  
+2. Retrieving  the EC2 public IP in the provision server stage
+   Run the following command to get the public IP. In this example, ec2_public_ip is the name of the Terraform output:
    ```bash
-   terraform output ec2_public_ip
+     terraform output ec2_public_ip
    ```
-3. Print the value to Stdout and \save it into an ENV variable in Jenkins
+3. Saving the EC2 public IP in a Jenkins environment variable
+   Store the output so it can be used later in the pipeline:
    ```bash
        EC2_PUBLIC_IP = sh(
              script: "terraform output ec2_public_ip",
              returnStdout: true
        ).trim()
    ```
-
-   4. Now we can reference the Public ip inside the deploy stage
+4. Referencing the public IP in the deploy stage
   
-      ```bash
-      
-             stage("deploy") {
-      
-                  steps{
-      
-                      script{
-      
-                          //Adding waiting period to give time to the EC2 and script to be ready to execute commands, when the server is created the 1st time      
+      ```bash      
+             stage("deploy") {      
+                  steps{      
+                      script{      
+                          // Wait for EC2 initialization and script readiness
                           echo "Waiting for EC2 to initialize..."
                           sleep(time: 120, unit: "SECONDS")
       
@@ -176,13 +169,15 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
                           def ec2Instance = "ec2-user@${EC2_PUBLIC_IP}"
       
                           sshagent(['server-ssh-key']){
-                              //StrictHostKeyChecking=no turnoff strict host checking when connecting to ec2
+                              //StrictHostKeyChecking=no --> Disable strict host key checking when connecting to EC2
                               dir("java-maven-app"){
                                   echo "Inside java-maven-app directory to copy files to ec2:"
                                   sh "ls"
+      
                                   echo "Copying files to EC2:"
                                   sh "scp -o StrictHostKeyChecking=no server-cmds.sh ${ec2Instance}:/home/ec2-user"
                                   sh "scp -o StrictHostKeyChecking=no docker-compose.yaml ${ec2Instance}:/home/ec2-user"
+
                                   echo "SSH & Running Script:"
                                   sh "ssh -o StrictHostKeyChecking=no ${ec2Instance} ${shellCmd}"
                               }
@@ -190,71 +185,87 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
                       }
                   }
               }
-
-      ### Allowing Jenkins to SSH AWS
-      1.  Add the jenkins ip to the terraform variables files.
+### Allowing Jenkins to SSH into AWS
+1.  Add the Jenkins IP address to Terraform variables
       ```bash
             variable jenkins_ip {
                 default = "198.199.70.18/32"
             }  
       ```
-      6. Modify the Ingress rules in the main.tf file to allow Jenkins to SSH AWS
-         ```bash
+    
+2. Update the security group ingress rules in main.tf
+   ```bash
              ingress {
                 from_port = 22
                 to_port = 22
                 protocol = "tcp"
                 cidr_blocks = [var.my_ip, var.jenkins_ip, var.my_ip_home]
             }
-         ```
-         7. Using environment block to read values:
-            ```bash
+   ```
+   
+3. Use the environment block to store Docker Hub credentials
+   ```bash
                 environment {
                     DOCKER_CREDENTIALS = credentials("docker-hub-repo")
-                    //This docker crendetials (username & password) contains the whole object username and password, but it automatically creates the password and username reference out of the box
+                    //// Automatically provides:
                     //DOCKER_CREDENTIALS_USR  --> username
                     //DOCKER_CREDENTIALS_PSW --> password
                 }
             
-            ```
+    ```
 
-       ### Modifyng the Server-cmds.sh
-      1. Adding docker login to the server-cmds script. The EC2 needs to authenticate 
-         ```bash
-             #Env Variables
-              export IMAGE=$1
-              export DOCKER_USER=$2
-              export DOCKER_PWD=$3
+  ### Modifyng the Server-cmds.sh Script
+  1. Adding Docker login commands to the script so the EC2 instance can authenticate with Docker Hub.
+     
+  2. Passing the image name, Docker username, and password as script arguments.
+     ```bash
+         #Env Variables
+         export IMAGE=$1
+         export DOCKER_USER=$2
+         export DOCKER_PWD=$3
+    
+         #Authenticate with Docker Hub
+         echo $DOCKER_PWD | docker login -u $DOCKER_USER --password-stdin
+    
+         # Deploy the application 
+         echo "Docker Image-2: $IMAGE"
+         docker-compose -f docker-compose.yaml up --detach
+         echo "Deployment successful"
+    ```
 
-             #Passing values to docker login 
-              echo $DOCKER_PWD | docker login -u $DOCKER_USER --password-stdin
-              echo "Docker Image-2: $IMAGE"
-              docker-compose -f docker-compose.yaml up --detach
-              echo "success"
-         ```
 
-
-      ### Git
-   1. commit changes to the ssh-agent branch
-      ```bash
+### Git Operations
+1. Commit changes to the ssh-agent branch:
+   ```bash
         git add .
         git commit -m "CI/CD pipeline"
         git push
-      ```
-   3. Run the pipeline
-   4. SSH to the EC2 using the PEM file and the public ip address
-      ```bash
-      ssh -i ec2-user@
-   6. Verify that the java-maven-app and the postgres containers are running in the EC2
+   ```
+2. Run the Jenkins pipeline.
    
+3. SsH into the EC2 instance using the .pem file and public IP address:
+   
+    ```bash
+        ssh -i myapp-key-pair.pem ec2-user@<EC2_PUBLIC_IP>
+    ```
+    
+4. Verify that the java-maven-app and postgres containers are running:
+    ```bash
+      docker ps
+    ```
+
+  
 ## 📦 Demo 4
 This This demo project shows how to configure a shared remote storage for Terraform using Amazon S3. By centralizing state, teams can safely collaborate on infrastructure code and avoid conflicts caused by local .tfstate files.
 ## 📌 Objective
 - Configure amazon S3 as remote storage for terraform state.
 
-## Project Configuration
-In the previous demo, the tfstate was saved in the jenkins serer howver, this does not allow to work collaborate among different team memebers. To share the state, the best way is to confiigure a remote terraform state file where it will be stored.
-1. Inside the main.tf add the terraform block which allows to configure metadata about terraform. Define the required version and the remote backed.
+## Remote State Using an S3 Backend
+In the previous demo, the tfstate file was stored on the Jenkins server. This approach does not support collaboration among multiple team members. To share the state securely and enable collaboration, configure a remote Terraform state backend using Amazon S3.
+
+1. Configure the S3 backend in main.tfInside the main.tf:
+   Add the terraform block to define the required Terraform version and S3 backend configuration:
+   
    ```bash
      terraform {
         required_version = ">= 0.12"
@@ -267,17 +278,27 @@ In the previous demo, the tfstate was saved in the jenkins serer howver, this do
          }
       }
    ```
-2. Go to S3 service in your AWS console
-3. Create the S3 Bucket in your AWS console. Using the same name previosly defined, the name must be unique fo the bucket
-4. Enable versioning
-5. Select the encyption type SSE-S3
-6. Disanle Buckey key
-7. Commit the changes and push
-8. Execute pipeline
+2. Create the S3 bucket in AWS:
+    In the AWS Management Console, go to the S3 service.
+    Create a new bucket with the same name defined in the backend configuration (myapp-tf-s3-bucket-aws).
+    Note: Bucket names must be unique across all AWS accounts.
+    Enable Versioning.
+    Set the encryption type to SSE-S3.
+    Disable Bucket Key.
+
+3. Commit and push changes to git repository.
+    ```bash
+      git add .
+      git commit -m "Configure remote state with S3 backend"
+      git push
+    ```
+4. Execute pipeline
    <details><summary><strong>Migrating local state</strong></summary>
-       If there is already a local state, then you should do terraform init and confirm the new backend manually. For demo purposed, the infrasturture here was deleted and recreate it.
+        If a local state file already exists, run `terraform init` and confirm the new backend when prompted. For this demo, the local infrastructure was deleted and recreated for simplicity.
     </details>
 
-9. Check the new state in the bucket
-10. Check the resoures created using terraform state list
+5. Verify the remote state:
+    * In the S3 console, confirm that the state.tfstate file exists in the bucket.
+    * List resources managed by Terraform:
+
    
