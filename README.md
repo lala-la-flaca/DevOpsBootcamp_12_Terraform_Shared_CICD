@@ -235,9 +235,7 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
          echo "Docker Image-2: $IMAGE"
          docker-compose -f docker-compose.yaml up --detach
          echo "Deployment successful"
-  ```
-
-
+     ```
 ### Git Operations
 1. Commit changes to the ssh-agent branch:
    ```bash
@@ -247,7 +245,7 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
    ```
 2. Run the Jenkins pipeline.
    
-3. SsH into the EC2 instance using the .pem file and public IP address:
+3. SSH into the EC2 instance using the .pem file and public IP address:
    
     ```bash
         ssh -i myapp-key-pair.pem ec2-user@<EC2_PUBLIC_IP>
@@ -268,6 +266,7 @@ This This demo project shows how to configure a shared remote storage for Terraf
 In the previous demo, the tfstate file was stored on the Jenkins server. This approach does not support collaboration among multiple team members. To share the state securely and enable collaboration, configure a remote Terraform state backend using Amazon S3.
 
 1. Configure the S3 backend in main.tfInside the main.tf:
+   
    Add the terraform block to define the required Terraform version and S3 backend configuration:
    
    ```bash
@@ -282,6 +281,7 @@ In the previous demo, the tfstate file was stored on the Jenkins server. This ap
          }
       }
    ```
+   
 2. Create the S3 bucket in AWS:
     In the AWS Management Console, go to the S3 service.
     Create a new bucket with the same name defined in the backend configuration (myapp-tf-s3-bucket-aws).
