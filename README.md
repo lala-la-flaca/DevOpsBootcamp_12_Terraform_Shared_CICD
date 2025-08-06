@@ -43,29 +43,41 @@ Git Repo:
 
 ## ⚙️ Project Configuration
 ### Creating  New Branch
-1. Open the Java-Maven-App application from Module 8 used to build the CI/CD pipeline.
+1. Open the Java-Maven-App application from Module 8, used to build the CI/CD pipeline.
 2. Create a New branch called jenkinsfile-sshagent
+   ```bash
+     git checkout -b jenkinsfile-sshagent
+   ```
 
 ### Creating SSH Key-Pair
-1. n the AWS Management Console, create a new key pair named myapp-key-pair
-2. Select Key pair type as RSA
-3. Select .pem format and create the key pair.
-4. In Jenkins, create a new credential in the Multibranch Pipeline configuration.
-5. Set the credential type to SSH Username with private key, then configure as follows:
+1. In the AWS Management Console, create a new key pair named myapp-key-pair
+   
+   <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/2%20ccreating%20key%20pair%20my%20app.png" width=800/>
+   
+3. Select Key pair type as RSA
+4. Select .pem format and create the key pair.
+5. In Jenkins, create a new credential in the Multibranch Pipeline configuration.
+6. Set the credential type to SSH Username with private key, then configure as follows:
    * Select ID: server-ssh-key
    * Username: ec2-user
    * Private key: Select enter directly and paste the content of the PEM file.
+
+   <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/3%20add%20private%20key%20to%20jenkins%20creentials.png" width=800/>
      
 ### Install Terraform Inside the Jenkins Container
 1. SSH into DigitalOcean droplet.
    ```bash
      ssh root@198.199.70.18
    ```
+   <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/4%20ssh%20to%20jenkins%20server%20DO%20droplet.png" width=800/>
+   
 2. Check the container ID
    ```bash
    docker ps
    ```
-3. Access the jenkins container as the root user.
+   <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/5%20insise%20jenkins%20docker%20container.png" width=800/>
+   
+3. Access the Jenkins container as the root user.
    ```bash
      docker exec -it -u 0 <container_id> bash
    ```
@@ -73,7 +85,9 @@ Git Repo:
     ```bash
       cat /etc/os-release    
     ```
-5. Install terraform:
+    <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/6%20checking%20what%20os%20we%20have%20%20availabel.png" width=800/>
+    
+5. Install Terraform:
    Follow the Terraform installation guide for your OS.
    [Terraform Install](https://developer.hashicorp.com/terraform/install)
    For Ubuntu/Debian-based systems:
@@ -82,19 +96,28 @@ Git Repo:
          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
          sudo apt update && sudo apt install terraform
    ```
+6. Check that terrform is installed
+   ```bash
+   terraform -v
+   ```
+   <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/7%20terraform%20instlled%20i%20the%20container.png" width=800/>
    
 ### Terraform Configuration Files
 1. In the java-maven-app directory, create a folder named terraform. 
-2. Inside the terraform folder, create a main.tf file.
+2. Inside the Terraform folder, create a main.tf file.
 3. Use the baseline configuration from Demo 1 to create the VPC.
 4. Replace the previous key pair with the new one:
    ```bash
    key_name = "myapp-key-pair"
    ```
+   <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/8%20copy%20the%20basic%20ec2%20configuration%20from%20the%20previous%20demo%20and%20update%20the%20keypair%20section%20to%20use%20the%20nrw%20key%20created.png" width=800/>
+   
 6. Create a file named entry-script.sh in the terraform folder and add the script that installs Docker and Docker Compose on the EC2 instance.
-7. Create a variables.tf file and define the required variables.
-8. Add default values for the variables in variables.tf
-9. Create an outputs.tf file and add the required output definitions.
+   <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/8%20inside%20terraform%20foldeer%20created%20the%20user%20data%20scriot.png" width=800/>
+   
+8. Create a variables.tf file and define the required variables.
+9. Add default values for the variables in variables.tf
+10. Create an outputs.tf file and add the required output definitions.
 
 ### Modifying Jenkins File to Provision Server
 1. Add a new stage called "provision server"
@@ -141,6 +164,8 @@ Git Repo:
        The prefix `TF_VAR_` allows Terraform to recognize environment variables. In this example, the `env_prefix` variable is overwritten from `dev` to `test`
     </details>
 
+  <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/10%20provision%20server%20env%20variable%20to%20overwrite%20dev.png" width=800/>
+  
 ### Modifying Jenkinsfile Deploy Stage
 
 1. Enabling dynamic SSH access to the EC2 instance:
@@ -159,6 +184,7 @@ Git Repo:
              returnStdout: true
        ).trim()
    ```
+  <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/11%20gettig%20the%20public%20ic%20to%20save%20it%20as%20a%20env%20variable%20and%20use%20it%20in%20the%20deploy%20stage.png" width=800/>
 5. Referencing the public IP in the deploy stage
   
       ```bash      
@@ -209,6 +235,7 @@ Git Repo:
                 cidr_blocks = [var.my_ip, var.jenkins_ip, var.my_ip_home]
             }
    ```
+   <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/12%20adding%20jenkins%20ip%20address%20to%20be%20able%20to%20ssh%20ec2%20security%20group.png" width=800/>
    
 3. Use the environment block to store Docker Hub credentials
    ```bash
@@ -220,6 +247,7 @@ Git Repo:
                 }
             
     ```
+   <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/13%20adding%20credentials%20docker.png" width=800/>
 
   ### Modifiyng the Server-cmds.sh Script
   1. Adding Docker login commands to the script so the EC2 instance can authenticate with Docker Hub.
@@ -246,6 +274,8 @@ Git Repo:
         git commit -m "CI/CD pipeline"
         git push
    ```
+   <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/14%20pushing%20chnages%20to%20git.png" width=800/>
+   
 2. Run the Jenkins pipeline.
    
 3. SSH into the EC2 instance using the .pem file and public IP address:
@@ -258,6 +288,7 @@ Git Repo:
     ```bash
       docker ps
     ```
+    <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/15%20docker%20containers%20up%20and%20running.png" width=800/>
 
   
 ## 📦 Demo 4
@@ -284,6 +315,7 @@ In the previous demo, the tfstate file was stored on the Jenkins server. This ap
          }
       }
    ```
+   <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/16%20backend%20remote%20state%20config.png" width=800/>
    
 2. Create the S3 bucket in AWS:
     In the AWS Management Console, go to the S3 service.
@@ -293,19 +325,23 @@ In the previous demo, the tfstate file was stored on the Jenkins server. This ap
     Set the encryption type to SSE-S3.
     Disable Bucket Key.
 
-3. Commit and push changes to git repository.
+   <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/18%20create%20the%20s3%20bucket.png" width=800/>
+
+4. Commit and push changes to git repository.
     ```bash
       git add .
       git commit -m "Configure remote state with S3 backend"
       git push
     ```
-4. Execute pipeline
+5. Execute pipeline
    <details><summary><strong>Migrating local state</strong></summary>
         If a local state file already exists, run `terraform init` and confirm the new backend when prompted. For this demo, the local infrastructure was deleted and recreated for simplicity.
     </details>
 
-5. Verify the remote state:
+6. Verify the remote state:
     * In the S3 console, confirm that the state.tfstate file exists in the bucket.
+      <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/21%20file%20in%20s3%20bucket.png" width=800/>
     * List resources managed by Terraform:
+      <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/terraform%20list%20comming%20from%20s3%20bucket.png" width=800/>
 
    
