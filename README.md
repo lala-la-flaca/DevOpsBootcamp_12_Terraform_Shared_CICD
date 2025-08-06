@@ -249,7 +249,7 @@ Git Repo:
     ```
    <img src="https://github.com/lala-la-flaca/DevOpsBootcamp_12_Terraform_Shared_CICD/blob/main/Img/13%20adding%20credentials%20docker.png" width=800/>
 
-  ### Modifiyng the Server-cmds.sh Script
+  ### Modifying the Server-cmds.sh Script
   1. Adding Docker login commands to the script so the EC2 instance can authenticate with Docker Hub.
      
   2. Passing the image name, Docker username, and password as script arguments.
