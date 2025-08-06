@@ -235,7 +235,7 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
          echo "Docker Image-2: $IMAGE"
          docker-compose -f docker-compose.yaml up --detach
          echo "Deployment successful"
-    ```
+  ```
 
 
 ### Git Operations
