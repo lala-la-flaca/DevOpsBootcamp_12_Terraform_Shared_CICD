@@ -95,13 +95,17 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
 
 ### Modifying Jenkins File to Provision Server
 1. Add a new stage called "provision server"
+   
 2. Define the steps and scripts for this stage
+   
 3. Add Terraform commands inside the script section.
+   
    <details><summary><strong>Terraform Commands</strong></summary>
        Terraform commands must be executed from the directory containing the Terraform configuration files
     </details>
+    
     ```bash
-              stage("provision server"){
+            stage("provision server"){
                     //Terraform provision server
                     steps {
                         script {
@@ -118,7 +122,7 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
                 }
             
     ```
-4. Set environment variables to allow Terraform to connect to AWS
+6. Set environment variables to allow Terraform to connect to AWS
    Add the environment block inside the provision server stage:
    ```bash
        environment{
