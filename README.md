@@ -3,7 +3,7 @@
 This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcamp. This demo shows how to set up a complete CI/CD pipeline to automate Terraform infrastructure provisioning using Jenkins. The pipeline runs Terraform commands to plan and apply changes whenever there is an update in the infrastructure code repository.
 
 Git Repo:
-[Demo 3 & 4 Repo] (https://gitlab.com/devopsbootcamp4095512/devopsbootcamp_8_jenkins_pipeline/-/tree/jenkinsfile-sshagent/java-maven-app?ref_type=heads)
+[Demo3_&_4_Repo](https://gitlab.com/devopsbootcamp4095512/devopsbootcamp_8_jenkins_pipeline/-/tree/jenkinsfile-sshagent/java-maven-app?ref_type=heads)
 
 ## 📌 Objective
 * Integrate Terraform workflows into a CI/CD pipeline.
