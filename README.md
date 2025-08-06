@@ -218,7 +218,7 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
             
     ```
 
-  ### Modifyng the Server-cmds.sh Script
+  ### Modifiyng the Server-cmds.sh Script
   1. Adding Docker login commands to the script so the EC2 instance can authenticate with Docker Hub.
      
   2. Passing the image name, Docker username, and password as script arguments.
