@@ -4,6 +4,7 @@ This exercise is part of **Module 12**: **Terraform** in the Nana DevOps Bootcam
 
 Git Repo:
 [JENKINS FILES](https://gitlab.com/devopsbootcamp4095512/devopsbootcamp_8_jenkins_pipeline/-/tree/jenkinsfile-sshagent/java-maven-app?ref_type=heads)
+[TERRAFORM FILES](https://gitlab.com/devopsbootcamp4095512/devopsbootcamp_12_terraform_aws/-/tree/demo/ansible-terraform-2?ref_type=heads)
 
 ## 📌 Objective
 * Integrate Terraform workflows into a CI/CD pipeline.
